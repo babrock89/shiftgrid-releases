@@ -1,6 +1,6 @@
 # ShiftGrid User Manual
 
-**Version 0.0.2**
+**Version 0.1.0**
 
 ---
 
@@ -16,10 +16,12 @@
 8. [Creating Shift Demands](#creating-shift-demands)
 9. [Shift Backlog](#shift-backlog)
 10. [Schedule Management](#schedule-management)
-11. [Project Management](#project-management)
-12. [Importing and Exporting Data](#importing-and-exporting-data)
-13. [Help Menu](#help-menu)
-14. [Tips and Best Practices](#tips-and-best-practices)
+11. [Monthly Calendar View](#monthly-calendar-view)
+12. [Analytics](#analytics)
+13. [Project Management](#project-management)
+14. [Importing and Exporting Data](#importing-and-exporting-data)
+15. [Help Menu](#help-menu)
+16. [Tips and Best Practices](#tips-and-best-practices)
 
 ---
 
@@ -30,9 +32,11 @@ ShiftGrid is a desktop application for managing shift assignments across multipl
 - Flexible asset and shift configuration
 - Team and roster management with POC (Point of Contact) tracking
 - Team member availability calendars with import support
-- Demand-based shift generation
+- Demand-based shift generation with optional POC assignment
 - Drag-and-drop schedule management
 - Auto-scheduling with intelligent conflict detection
+- Analytics dashboard with schedule health metrics
+- Monthly calendar view for at-a-glance schedule overview
 - CSV import and export for data portability
 
 ---
@@ -62,7 +66,7 @@ When you first launch ShiftGrid, a **Project Manager** dialog appears with optio
 
 ## Navigation
 
-The application has a left sidebar with six main pages:
+The application has a left sidebar with seven main pages:
 
 | Page | Description |
 |------|-------------|
@@ -72,6 +76,7 @@ The application has a left sidebar with six main pages:
 | **Create Demand** | Define how many shifts each team needs |
 | **Shift Backlog** | View generated shifts waiting to be scheduled |
 | **Schedule** | The main calendar grid for placing shifts |
+| **Analytics** | Schedule health metrics, utilization, and workload analysis |
 
 The sidebar also shows:
 - Current project name (click to open Project Manager)
@@ -112,19 +117,23 @@ The system calculates total configured hours vs. available hours automatically.
 
 ### Asset Capabilities
 
-Capabilities represent special features an asset has (e.g., "High Security", "Equipment X"):
+Capabilities are managed at the project level in a collapsible section above the assets grid. They represent special features or resources (e.g., "High Security", "Equipment X"):
 
-1. Type a capability name in the input field
-2. Press Enter or click Add
-3. The capability is now available for all assets
-4. Check/uncheck capabilities for each asset
+1. Expand the **Capabilities** section on the Assets page
+2. Type a capability name and click **Add**
+3. For each capability, you can:
+   - **Rename** — Click the capability name to edit it inline
+   - **Toggle Shared Resource** — Mark the capability as a limited shared resource
+   - **Set Available Quantity** — When shared, specify how many can be used concurrently across all assets
+   - **Assign to Assets** — Use toggle buttons to assign/unassign the capability to specific assets
 
-Capabilities are used when creating demands to ensure shifts are only placed in assets that have required features.
+On individual asset cards, capabilities appear as toggle buttons (no free-form input — select from the project-level list).
 
-### Saving/Loading Configuration
+#### Shared Resource Constraints
 
-- **Save Config** - Export asset configuration to a JSON file
-- **Load Config** - Import a previously saved configuration
+When a capability is marked as a shared resource with a quantity limit:
+- **Drag-and-drop**: A warning appears if scheduling a shift would exceed the shared resource's available quantity in that time slot across all assets
+- **Auto-scheduler**: Treats the shared resource capacity as a hard constraint and will not exceed it
 
 ---
 
@@ -136,15 +145,17 @@ The Roster page is a centralized list of all team members (POCs) before assignin
 
 **Manually:**
 1. Enter **First Name** and **Last Name**
-2. Press Enter or click **Add**
+2. Optionally enter a **Username** (e.g., network login, tool username)
+3. Press Enter or click **Add**
 
 **Bulk Import:**
 1. Click **Import CSV**
-2. Select a CSV or Excel file (.csv, .xlsx, .xls)
+2. Select a CSV file (.csv)
 3. The system auto-detects name columns:
    - Columns with "First" and "Last" in headers
    - Or a single "Name" column with "First Last" or "Last, First" format
-4. Duplicates are automatically skipped
+4. An optional "Username" column (also matches "User Name" or "User") is imported if present
+5. Duplicates are automatically skipped
 
 ### Assigning to Teams
 
@@ -309,6 +320,7 @@ Demands define how many shifts each team needs and where they can be placed.
 | **Min Required POCs** | Override the team default for this demand |
 | **Required Capabilities** | Assets must have these capabilities |
 | **Compatible Assets** | Which assets can these shifts be placed in |
+| **Assign Members** | Optional toggle to assign specific POCs to individual shifts |
 | **Note** | Optional text that appears on shift cards |
 
 ### Demand Modes
@@ -351,6 +363,38 @@ When using recurring patterns, the backlog automatically stays in sync with your
 1. Select capabilities the shift requires
 2. Assets without those capabilities are automatically disabled (greyed out)
 3. Disabled assets show a tooltip explaining which capabilities are missing
+
+### POC Assignment to Shifts
+
+When the **Assign Members** option is enabled on a demand:
+
+**During Drag-and-Drop:**
+- When you drop a shift onto the schedule, a **POC Assignment Modal** appears
+- Available POCs are shown as selectable checkboxes; unavailable POCs are greyed out with a reason (shift conflict, calendar unavailability, etc.)
+- You must select at least the minimum required number of POCs before confirming
+- Cancelling the modal cancels the drop entirely
+
+**During Auto-Scheduling:**
+- POCs are automatically assigned based on availability
+- The algorithm distributes shifts fairly — POCs with fewer total shifts are preferred
+- Distribution is tracked globally across all teams for shared POCs
+
+**Display:**
+- Shift cards show "(N)" after the team name indicating the number of assigned POCs
+- Schedule grid slots show "N assigned" text below the asset name
+- Hover tooltips show the full list of assigned POC names
+
+### Shift Detail Modal
+
+Click any shift card (in the backlog or on the schedule) to open a detailed view showing:
+- Date, time, and duration
+- Team info with full roster and assigned POC highlighting
+- Compatible assets
+- Required capabilities with match indicators
+- Recurrence pattern (if applicable)
+- Notes
+
+Click outside the modal or press the Close button to dismiss.
 
 ### Generating Shifts
 
@@ -483,6 +527,76 @@ Click **Clear** to move all scheduled shifts back to the backlog (with confirmat
 
 ---
 
+## Monthly Calendar View
+
+The Schedule page includes a **Calendar** tab that provides a traditional month-at-a-glance view of the schedule for a selected asset.
+
+### Viewing the Calendar
+
+1. Navigate to the **Schedule** page
+2. Click the **Calendar** tab (next to the grid view)
+3. Select an asset from the **Asset** dropdown
+
+### Calendar Features
+
+- **Sun–Sat grid** — Traditional 7-column weekly layout showing one month at a time
+- **Color-coded shift blocks** — Each shift displays as a colored block using the team's color, showing the team name and time range (e.g., "06:00–14:00")
+- **Month navigation** — Use the prev/next arrows to move between months. Navigation is constrained to months that overlap with the schedule period
+- **Today highlighting** — Today's date is highlighted with a blue circle. The calendar auto-scrolls to the current month on load
+- **Hover tooltips** — Hover over a shift block to see full details including assigned POCs and notes
+- **Day states** — Days outside the schedule period are grayed out. Days when the asset is closed show a "Closed" label
+
+### Printing
+
+Click the **Print** button to generate a print-friendly layout with the asset name, month, date range, and generation timestamp in the header.
+
+---
+
+## Analytics
+
+The **Analytics** page provides a read-only dashboard of schedule health and metrics. It updates live as the schedule changes.
+
+### Schedule Summary
+
+Card grid showing key metrics:
+- **Total scheduled shifts** and **backlog shifts**
+- **Active assets** and **active teams**
+- Completion progress bar
+- Schedule period display
+
+### Demand Fulfillment
+
+Per-demand breakdown showing how many shifts have been scheduled vs. the total required:
+- Progress bars for each demand
+- Status badges: **Complete** (green), **Partial** (amber), **Unscheduled** (gray)
+- Summary counts at the bottom
+
+### Asset Utilization
+
+Per-asset horizontal bar charts showing the percentage of available slots filled:
+- Respects days of operation and half-day configurations
+- Color-coded bars (green for high utilization, amber for low)
+
+### Team Shift Analysis
+
+Per-team breakdown showing:
+- Total shift count
+- Early vs. late shift counts (as badges)
+- Distribution across assets
+
+### Team Member Workload
+
+Shown only when POC assignment data exists in the schedule:
+- Table with per-POC shift counts
+- Early/late breakdown and team/asset distribution
+- Highlights workload imbalances (>50% deviation from team mean) with amber warnings
+
+### Printing
+
+Click the **Print** button to generate a print-friendly report. The sidebar and non-essential UI are hidden, and page breaks are placed to keep sections together.
+
+---
+
 ## Project Management
 
 ### Project Structure
@@ -496,6 +610,17 @@ Each project is stored in a folder containing:
 
 - **Save** (sidebar) - Save to current project location
 - **Save As** (sidebar) - Save to a new location with a new name
+
+### Unsaved Changes
+
+When you close the application with unsaved changes, a prompt appears with four options:
+
+- **Save Project** — Save to the current project location and close (disabled if no project is open)
+- **Save as New Project** — Opens the Save As flow to save to a new location, then closes
+- **Cancel** — Stay in the application
+- **Exit Without Saving** — Close immediately without saving
+
+If no changes have been made since the last save, the app closes immediately without prompting.
 
 ### Loading
 
@@ -519,7 +644,8 @@ From the Project Manager:
 | Column | Description |
 |--------|-------------|
 | Team Name | Name of the assigned team |
-| Team Members | Semicolon-separated list of team POCs |
+| Team Members | Semicolon-separated list of team POCs (assigned POCs only if POC assignment is enabled) |
+| Usernames | Semicolon-separated usernames from roster (if set) |
 | Asset | Asset name where shift is scheduled |
 | Start Date/Time | Shift start (e.g., "2026-01-27 06:00") |
 | End Date/Time | Shift end (e.g., "2026-01-27 14:00") |
@@ -683,4 +809,4 @@ https://github.com/babrock89/shiftgrid-app/issues
 
 ---
 
-*ShiftGrid v0.0.1 - Built with React and Electron*
+*ShiftGrid v0.1.0 - Built with React and Electron*
